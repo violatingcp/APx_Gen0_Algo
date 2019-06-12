@@ -61,9 +61,18 @@ inline void mp7_pack(hls::stream<PFChargedObj> obj[], axi_t &data) {
       data.data.range(48+pOffset,39+pOffset) = tmpobj.hwZ0;
     }
 }
+inline void mp7_pack(hls::stream<PFChargedObj> &obj, axi_t &data) {
+    #pragma HLS inline
+  PFChargedObj tmpobj = obj.read();
+  data.data.range(15,0 ) = tmpobj.hwPt;
+  data.data.range(24,16) = tmpobj.hwEta;
+  data.data.range(34,25) = tmpobj.hwPhi;
+  data.data.range(38,35) = tmpobj.hwId;
+  data.data.range(48,39) = tmpobj.hwZ0;
+}
 template<unsigned int N>
 void make_inputs(input_t nn_data[N*8], hls::stream<PFChargedObj> pf[N]) {
-  #pragma HLS inline
+  //#pragma HLS inline
   #pragma HLS PIPELINE
   for (int i = 0; i < N; i++) {
         #pragma HLS PIPELINE II=1
@@ -78,33 +87,37 @@ void make_inputs(input_t nn_data[N*8], hls::stream<PFChargedObj> pf[N]) {
     nn_data[i*8+7] = input_t(tmpobj.hwId == 0 ? 1 : 0);
   }
 } 
-void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<axi_t> &link_out) {
-  #pragma HLS PIPELINE
+void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<PFChargedObj > &allparts_out) { //hls::stream<axi_t> &link_out) {
+  #pragma HLS PIPELINE II=12
   #pragma HLS INTERFACE axis port=allparts_in
-  #pragma HLS INTERFACE axis port=link_out
+  #pragma HLS INTERFACE axis port=allparts_out
   #pragma HLS INTERFACE s_axilite port=return bundle=ctrl
 
-  hls::stream<PFChargedObj > allparts_out[DATA_SIZE];
-  #pragma HLS stream variable=allparts_in  depth=5
-  #pragma HLS stream variable=allparts_out depth=5  
-  #pragma HLS stream variable=link_out     depth=5
+  //hls::stream<PFChargedObj > allparts_out;
+  #pragma HLS stream variable=allparts_in  depth=3
+  #pragma HLS stream variable=allparts_out depth=3  
+  //#pragma HLS stream variable=link_out     depth=5
 
-  sorting_network_128(allparts_in,allparts_out);
-  PFChargedObj taus[NTAU];
-  #pragma HLS ARRAY_PARTITION variable=taus complete
+  sorting_network_128_nn(allparts_in,allparts_out);
+  //axi_t data_out;
+  //mp7_pack(allparts_out,data_out);
+  //link_out.write(data_out);
+  /*
   for(int itau = 0; itau < NTAU; itau++) {
-    input_t nn_data[NTAUPARTS*8];
-    make_inputs<NTAUPARTS>(nn_data,allparts_out);            
-    result_t taunn[N_OUTPUTS];
-    tau_nn(nn_data,taunn);
     PFChargedObj dummyc; 
-    dummyc.hwPt = taunn[0]*100;; dummyc.hwEta = nn_data[1]; dummyc.hwPhi = nn_data[2]; dummyc.hwId = 0; dummyc.hwZ0 = 0;
-    taus[itau] = dummyc;
+    result_t taunn[N_OUTPUTS];
+    input_t  nn_data[NTAUPARTS*8];
+    make_inputs<NTAUPARTS>(nn_data,allparts_out);            
+    tau_nn(nn_data,taunn);
+    dummyc.hwPt = taunn[0]*100; dummyc.hwEta = nn_data[1]; dummyc.hwPhi = nn_data[2]; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+    //taus[itau] = dummyc;
+    axi_t data_out;
+    mp7_pack<1,0>(&dummyc,data_out);
+    link_out.write(data_out);
   }
-  PFChargedObj tausout[NTAU]; 
-  #pragma HLS ARRAY_PARTITION variable=tausout complete
-  ptsort_hwopt_ind<PFChargedObj,NTAU,NTAU>(taus, tausout);
-  axi_t data_out;
-  mp7_pack<NTAU,0>(tausout,data_out);
-  link_out.write(data_out);
+  //PFChargedObj tausout[NTAU]; 
+  //#pragma HLS ARRAY_PARTITION variable=tausout complete
+  //ptsort_hwopt_ind<PFChargedObj,NTAU,NTAU>(taus, tausout);
+  */
 }
+

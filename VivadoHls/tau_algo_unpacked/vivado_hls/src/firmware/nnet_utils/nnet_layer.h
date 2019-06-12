@@ -45,19 +45,22 @@ struct layer_config
     // partitioning arrays cyclically to go with roll factors?
 };
 
+
+#define DIV_ROUNDUP(n,d) ((n + d - 1) / d)
+
  template<class data_T, class res_T, typename CONFIG_T>
 void compute_layer(
     data_T    data[CONFIG_T::n_in],
     res_T     res[CONFIG_T::n_out],
-    typename CONFIG_T::weight_t  weights[CONFIG_T::n_in][CONFIG_T::n_out],
+    typename CONFIG_T::weight_t  weights[CONFIG_T::n_in*CONFIG_T::n_out],
     typename CONFIG_T::bias_t    biases[CONFIG_T::n_out])
 {
     data_T cache;
-    typename CONFIG_T::accum_t mult[CONFIG_T::n_in][CONFIG_T::n_out];
+    typename CONFIG_T::accum_t mult[CONFIG_T::n_in*CONFIG_T::n_out];
     typename CONFIG_T::accum_t acc[CONFIG_T::n_out];
 
     // Use a function_instantiate in case it helps to explicitly optimize unchanging weights/biases
-    #pragma HLS function_instantiate variable=weights,biases
+    //#pragma HLS function_instantiate variable=weights,biases
 
     if (CONFIG_T::io_type == io_parallel){
         // For parallel inputs:
@@ -65,13 +68,15 @@ void compute_layer(
         //   - if we have an unroll factor, limit number of multipliers
         #pragma HLS PIPELINE II=CONFIG_T::reuse_factor
 
+        static const int block_factor       = (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor); //DIV_ROUNDUP(CONFIG_T::n_in*CONFIG_T::n_out, CONFIG_T::reuse_factor);
+	std::cout << " ---> " << CONFIG_T::n_in*CONFIG_T::n_out << " -- " << CONFIG_T::reuse_factor << " --- " << (CONFIG_T::n_in*CONFIG_T::n_out/CONFIG_T::reuse_factor) << std::endl;
         // #pragma HLS ARRAY_PARTITION variable=weights complete // remove this line for now, it breaks compression sometimes
         #pragma HLS ARRAY_PARTITION variable=biases complete
-        #pragma HLS ARRAY_PARTITION variable=mult complete
+        #pragma HLS ARRAY_RESHAPE   variable=mult block factor=block_factor
         #pragma HLS ARRAY_PARTITION variable=acc complete
 
-        int multiplier_limit  = ceil(float(CONFIG_T::n_in*CONFIG_T::n_out) / float(CONFIG_T::reuse_factor)) - floor(float(CONFIG_T::n_zeros) / float(CONFIG_T::reuse_factor));
-        #pragma HLS ALLOCATION instances=mul limit=multiplier_limit operation
+    int multiplier_limit  = ceil(float(CONFIG_T::n_in*CONFIG_T::n_out) / float(CONFIG_T::reuse_factor)) - floor(float(CONFIG_T::n_zeros) / float(CONFIG_T::reuse_factor));
+    #pragma HLS ALLOCATION instances=mul limit=multiplier_limit operation
 
     } else if (CONFIG_T::io_type == io_serial){
         #pragma HLS ARRAY_RESHAPE variable=weights complete dim=2
@@ -93,7 +98,7 @@ void compute_layer(
                 int multiplier_limit  = ceil(float(CONFIG_T::n_out) / float(CONFIG_T::reuse_factor));
                 #pragma HLS ALLOCATION instances=mul limit=multiplier_limit operation
             }
-            mult[ii][jj] = cache * weights[ii][jj];
+            mult[ii*CONFIG_T::n_out+jj] = cache * weights[ii*CONFIG_T::n_out+jj];
         }
     }
 
@@ -111,7 +116,7 @@ void compute_layer(
             #pragma HLS PIPELINE
         }
         Accum2: for(int jj = 0; jj < CONFIG_T::n_out; jj++) {
-            acc[jj] += mult[ii][jj];
+	  acc[jj] += mult[ii*CONFIG_T::n_out+jj];
         }
     }
 

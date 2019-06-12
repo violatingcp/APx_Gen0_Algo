@@ -741,7 +741,7 @@ void block64_step1_net_64(PFChargedObj datas[64]) {
 void sorting_network_64(PFChargedObj datas[64]) {
   //#pragma HLS pipeline II=2
   //#pragma HLS pipeline II=1
-#pragma HLS pipeline II=1
+#pragma HLS pipeline II=5
 	block2_step1_net_64(datas);
 	block4_step2_net_64(datas);
 	block4_step1_net_64(datas);
@@ -2642,7 +2642,7 @@ void block128_step1_net_128(PFChargedObj datas[128]) {
 
 
 void sorting_network_128(PFChargedObj datas[128]) {
-#pragma HLS pipeline II=1 
+#pragma HLS pipeline II=5 
 
 	block2_step1_net_128(datas);
 	block4_step2_net_128(datas);

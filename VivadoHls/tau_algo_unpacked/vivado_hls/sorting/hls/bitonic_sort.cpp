@@ -24,7 +24,7 @@ void bitonic_sort(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFCha
 #pragma HLS interface ap_ctrl_hs port=return
 #pragma HLS interface axis port=data_in 
 #pragma HLS interface axis port=data_out 
-#pragma HLS PIPELINE II=1
+#pragma HLS PIPELINE II=25
 
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1

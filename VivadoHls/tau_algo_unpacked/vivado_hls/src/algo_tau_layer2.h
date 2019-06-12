@@ -9,7 +9,7 @@
 #include "GlobalCorrelator_HLS/puppi/firmware/simple_puppi.h"
 
 #define DATA_SIZE 128
-#define NTAU  5
+#define NTAU  6
 #define NREGIONS 36
 #define NPART 25
 #define DEPTH NREGIONS*2
@@ -24,6 +24,7 @@ static int16_t PHI_WRAP = 360*ETAPHI_FACTOR;            // what is 3.14 in integ
 typedef ap_axis <64*NPART,1,1,1> axi_t;
 typedef hls::stream<axi_t> stream_t;
 
-void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<axi_t> &link_out);
+void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<PFChargedObj> &link_out);
+//void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<axi_t> &link_out);
 
 #endif

@@ -1,4 +1,5 @@
 #include "sorting_network.h"
+#include "firmware/tau_nn.h"
 
 void swap1(PFChargedObj &data1, PFChargedObj &data2) {
 	if (data1.hwPt < data2.hwPt) {
@@ -752,7 +753,7 @@ void block64_step1_net_64(PFChargedObj datas[64]) {
 void sorting_network_64_in(PFChargedObj datas[64]) {
   //#pragma HLS pipeline II=2
   //#pragma HLS pipeline II=1
-#pragma HLS pipeline II=1
+#pragma HLS pipeline II=2
 	block2_step1_net_64(datas);
 	block4_step2_net_64(datas);
 	block4_step1_net_64(datas);
@@ -2655,7 +2656,7 @@ void block128_step1_net_128(PFChargedObj datas[128]) {
 
 
 void sorting_network_128_in(PFChargedObj datas[128]) {
-#pragma HLS pipeline II=1 
+#pragma HLS pipeline II=2 
 
 	block2_step1_net_128(datas);
 	block4_step2_net_128(datas);
@@ -2708,7 +2709,7 @@ void sorting_network_64(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream
  #pragma HLS interface ap_ctrl_hs port=return
  #pragma HLS interface axis port=data_in register
  #pragma HLS interface axis port=data_out register
- #pragma HLS PIPELINE II=1
+ #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
@@ -2725,7 +2726,7 @@ void sorting_network_128(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::strea
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in register
   #pragma HLS interface axis port=data_out register
-  #pragma HLS PIPELINE II=1
+  #pragma HLS PIPELINE II=12
   
   PFChargedObj datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
@@ -2734,5 +2735,52 @@ void sorting_network_128(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::strea
     input(datas, data_in);
     sorting_network_128_in(datas);
     output(datas, data_out);
+  }
+}
+
+template<unsigned int N>
+void make_inputs(input_t nn_data[N*8], PFChargedObj pf[DATA_SIZE]) {
+  //#pragma HLS inline
+  #pragma HLS PIPELINE
+  for (int i = 0; i < N; i++) {
+    #pragma HLS PIPELINE II=1
+    PFChargedObj tmpobj = pf[i];
+    nn_data[i*8+0] = input_t(tmpobj.hwPt);
+    nn_data[i*8+1] = input_t(tmpobj.hwEta);
+    nn_data[i*8+2] = input_t(tmpobj.hwPhi);
+    nn_data[i*8+3] = input_t(tmpobj.hwId == 2 ? 1 : 0);
+    nn_data[i*8+4] = input_t(tmpobj.hwId == 3 ? 1 : 0);
+    nn_data[i*8+5] = input_t(tmpobj.hwId == 4 ? 1 : 0);
+    nn_data[i*8+6] = input_t(tmpobj.hwId == 1 ? 1 : 0);
+    nn_data[i*8+7] = input_t(tmpobj.hwId == 0 ? 1 : 0);
+  }
+} 
+
+void output_nn(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj > inaxis_out[DATA_SIZE]) {
+	// output data to stream
+	for (int i = 0; i < DATA_SIZE; ++i) {
+	#pragma HLS unroll
+		inaxis_out[i].write(datas[i]);
+	}
+}
+
+void sorting_network_128_nn(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFChargedObj> &data_out) { 
+  #pragma HLS interface ap_ctrl_hs port=return
+  #pragma HLS interface axis port=data_in  register
+  #pragma HLS interface axis port=data_out register
+  #pragma HLS PIPELINE II=12
+  
+  PFChargedObj datas[DATA_SIZE];
+  #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
+  for(int i0 = 0; i0 < NTAU; i0++) {
+    input(datas, data_in);
+    sorting_network_128_in(datas);
+    input_t  nn_data[NTAUPARTS*8];
+    result_t taunn[N_OUTPUTS];
+    PFChargedObj dummyc = datas[0];
+    make_inputs<NTAUPARTS>(nn_data,datas);
+    tau_nn(nn_data,taunn);
+    dummyc.hwPt = taunn[0]*100;
+    data_out.write(dummyc);
   }
 }

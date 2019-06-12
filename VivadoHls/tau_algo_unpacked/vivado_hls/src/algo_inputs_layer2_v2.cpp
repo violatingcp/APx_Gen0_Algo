@@ -1,4 +1,4 @@
-#include "algo_inputs_layer2.h"
+#include "algo_inputs_layer2_v2.h"
 #include "hls_video.h"
 
 template<int NB>
@@ -46,6 +46,21 @@ void ptsort_hwopt_ind(T in[NIn], T out[NOut]) {
 
 }
 template<unsigned int N> 
+inline void mp7_unpack(axi_t data,int iDepth, PFChargedObj emcalo[]) {
+    #pragma HLS inline
+    #pragma HLS PIPELINE
+    int lOffSet = iDepth*N;
+    for (unsigned int i = 0; i < N; ++i) {
+      int pOffset = (i)*64;
+      emcalo[lOffSet+i].hwPt       = data.data(15+pOffset, 0+pOffset);
+      emcalo[lOffSet+i].hwEta      = data.data(24+pOffset,16+pOffset);
+      emcalo[lOffSet+i].hwPhi      = data.data(34+pOffset,25+pOffset);
+      emcalo[lOffSet+i].hwId       = data.data(38+pOffset,35+pOffset);
+      emcalo[lOffSet+i].hwZ0       = data.data(48+pOffset,39+pOffset);
+    }
+}
+
+template<unsigned int N> 
 inline void mp7_unpack(axi_t data, PFChargedObj emcalo[N]) {
     #pragma HLS inline
     #pragma HLS PIPELINE
@@ -56,22 +71,6 @@ inline void mp7_unpack(axi_t data, PFChargedObj emcalo[N]) {
       emcalo[i].hwPhi      = data.data(34+pOffset,25+pOffset);
       emcalo[i].hwId       = data.data(38+pOffset,35+pOffset);
       emcalo[i].hwZ0       = data.data(48+pOffset,39+pOffset);
-    }
-}
-
-template<unsigned int N> 
-inline void mp7_unpack(axi_t data, hls::stream<PFChargedObj> &emcalo) {
-    #pragma HLS inline
-    #pragma HLS PIPELINE
-    for (unsigned int i = 0; i < N; ++i) {
-      int pOffset = (i)*64;
-      PFChargedObj pCand;
-      pCand.hwPt       = data.data(15+pOffset, 0+pOffset);
-      pCand.hwEta      = data.data(24+pOffset,16+pOffset);
-      pCand.hwPhi      = data.data(34+pOffset,25+pOffset);
-      pCand.hwId       = data.data(38+pOffset,35+pOffset);
-      pCand.hwZ0       = data.data(48+pOffset,39+pOffset);
-      emcalo.write(pCand);
     }
 }
 
@@ -546,16 +545,34 @@ void tausort_in(PFChargedObj pfch[N0], PFChargedObj pfpho[N1], PFChargedObj pfne
   }
 }
 template<int N,int NMAX> 
-void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,hls::stream<PFChargedObj> &pfch,hls::stream<PFChargedObj > axis_in[]) { 
+void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],hls::stream<PFChargedObj > axis_in[]) { 
   #pragma HLS inline
   #pragma HLS PIPELINE 
   const ap_int<16> eDR2MAX = DR2MAX;
   PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
   for (int i = 0; i < NMAX; i++) {
-    PFChargedObj pfcand = pfch.read();
-    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfcand.hwEta,pfcand.hwPhi,eDR2MAX);
+    #pragma HLS UNROLL
+    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
     if(drcheck < DRCONE) { 
-      dummyc = pfcand;
+      dummyc = pfch[i];
+    } else { 
+      dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+    }
+    axis_in[iOffSet+i].write(dummyc);
+  }
+}
+template<int N,int NMAX> 
+void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChargedObj pfch[],hls::stream<PFChargedObj > axis_in[]) { 
+  #pragma HLS inline
+  #pragma HLS PIPELINE 
+  const ap_int<16> eDR2MAX = DR2MAX;
+  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+  int lOffSet = iRegion*N;
+  for (int i = 0; i < NMAX; i++) {
+    #pragma HLS UNROLL
+    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
+    if(drcheck < DRCONE) { 
+      dummyc = pfch[lOffSet+i];
     } 
     axis_in[iOffSet+i].write(dummyc);
   }
@@ -564,52 +581,51 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,hls::stream<PFChar
 //typedef ap_axis <64*NPART,1,1,1> axi_t;
 //typedef hls::stream<axi_t> hls::stream<axi_t>;
 //stream depth is TM6 and 240 MHz gives 24 clocks
-void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,
-			hls::stream<PFChargedObj > allparts_in [DATA_SIZE]) { 
+void algo_inputs_layer2_v2(hls::stream<axi_t> &ch_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,
+			   hls::stream<PFChargedObj > allparts_in [DATA_SIZE]) { 
   #pragma HLS PIPELINE 
-  #pragma HLS INTERFACE axis port=ch1_link_in
-  #pragma HLS INTERFACE axis port=ch2_link_in
+  #pragma HLS INTERFACE axis port=ch_link_in
   #pragma HLS INTERFACE axis port=ne_link_in
   #pragma HLS INTERFACE axis port=em_link_in
   #pragma HLS INTERFACE axis port=mu_link_in
   #pragma HLS INTERFACE axis port=allparts_in
   #pragma HLS INTERFACE s_axilite port=return bundle=ctrl
   
-  #pragma HLS stream variable=ch1_link_in depth=6
-  #pragma HLS stream variable=ch2_link_in depth=6
-  #pragma HLS stream variable=ne_link_in  depth=6
-  #pragma HLS stream variable=em_link_in  depth=6
-  #pragma HLS stream variable=mu_link_in  depth=6
+  #pragma HLS stream variable=ch_link_in depth=72
+  #pragma HLS stream variable=ne_link_in  depth=72
+  #pragma HLS stream variable=em_link_in  depth=72
+  #pragma HLS stream variable=mu_link_in  depth=72
   #pragma HLS stream variable=allparts_in depth=5
 
-  hls::stream<PFChargedObj> pfch[NREGIONS];
-  hls::stream<PFChargedObj> pfem[NREGIONS];
-  hls::stream<PFChargedObj> pfne[NREGIONS];
-  hls::stream<PFChargedObj> pfmu[NREGIONS];
+  PFChargedObj pfch[NREGIONS][NTRACK];
+  PFChargedObj pfem[NREGIONS][NPHOTON];
+  PFChargedObj pfne[NREGIONS][NSELCALO];
+  PFChargedObj pfmu[NREGIONS][NMU];
   //#pragma HLS ARRAY_RESHAPE variable=pfch  complete
   //#pragma HLS ARRAY_RESHAPE variable=pfpho complete
   //#pragma HLS ARRAY_RESHAPE variable=pfne  complete
   //#pragma HLS ARRAY_RESHAPE variable=pfmu  complete
-  //#pragma HLS ARRAY_RESHAPE variable=pfch  block factor=25   dim=2
-  //#pragma HLS ARRAY_RESHAPE variable=pfpho block factor=20   dim=2
-  //#pragma HLS ARRAY_RESHAPE variable=pfne  block factor=20   dim=2
-  //#pragma HLS ARRAY_RESHAPE variable=pfmu  block factor=2    dim=2
-  //#pragma HLS RESOURCE      variable=pfch  core=RAM_2P_BRAM
-  //#pragma HLS RESOURCE      variable=pfpho core=RAM_2P_BRAM
-  //#pragma HLS RESOURCE      variable=pfne  core=RAM_2P_BRAM
-  //#pragma HLS RESOURCE      variable=pfmu  core=RAM_2P_BRAM
+  #pragma HLS ARRAY_RESHAPE variable=pfch  block factor=25   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfem  block factor=20   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfne  block factor=20   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfmu  block factor=2    dim=2
 
-  //First take the seed from each region
-  #pragma HLS stream variable=pfch  depth=25
-  #pragma HLS stream variable=pfem  depth=20
-  #pragma HLS stream variable=pfne  depth=20
-  #pragma HLS stream variable=pfmu  depth=2
+  //#pragma HLS ARRAY_RESHAPE variable=pfch  block factor=25     
+  //#pragma HLS ARRAY_RESHAPE variable=pfpho block factor=20     
+  //#pragma HLS ARRAY_RESHAPE variable=pfne  block factor=20     
+  //#pragma HLS ARRAY_RESHAPE variable=pfmu  block factor=2      
+  //#pragma HLS ARRAY_RESHAPE variable=pfmu  complete
+
+  //#pragma HLS RESOURCE      variable=pfch   core=RAM_2P_BRAM
+  //#pragma HLS RESOURCE      variable=pfpho  core=RAM_2P_BRAM
+  //#pragma HLS RESOURCE      variable=pfne   core=RAM_2P_BRAM
+  //#pragma HLS RESOURCE      variable=pfmu   core=RAM_2P_BRAM
 
   //First take the seed from each region
   PFChargedObj chseed[NREGIONS];
   #pragma HLS ARRAY_PARTITION variable=chseed complete
 
-  #pragma HLS DEPENDENCE variable=chseed intra false
+  //#pragma HLS DEPENDENCE variable=chseed intra false
   #pragma HLS DEPENDENCE variable=pfch   intra false
   #pragma HLS DEPENDENCE variable=pfem   intra false
   #pragma HLS DEPENDENCE variable=pfne   intra false
@@ -618,11 +634,12 @@ void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_
   LoopA:
   for(int idepth =0; idepth < NREGIONS; idepth++) { 
     #pragma HLS PIPELINE II=1
-    mp7_unpack_seed    (ch1_link_in.read(), chseed[idepth]);
-    mp7_unpack<NTRACK> (ch2_link_in.read(),pfch [idepth]);
-    mp7_unpack<NEMCALO>(em_link_in.read(), pfem [idepth]);
-    mp7_unpack<NCALO>  (ne_link_in.read(), pfne [idepth]);
-    mp7_unpack<NMU>    (mu_link_in.read(), pfmu [idepth]);
+    axi_t charge = ch_link_in.read();
+    mp7_unpack_seed    (charge, chseed[idepth]);
+    mp7_unpack<NTRACK> (charge,pfch [idepth]);
+    mp7_unpack<NEMCALO>(em_link_in.read(), pfem[idepth]);
+    mp7_unpack<NCALO>  (ne_link_in.read(), pfne[idepth]);
+    mp7_unpack<NMU>    (mu_link_in.read(), pfmu[idepth]);
   }
   //Next iterate through seeds and compute DR
   PFChargedObj seeds[NTAU];
@@ -647,7 +664,7 @@ void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_
       }
     }
   }
-  #pragma HLS DEPENDENCE variable=allparts_in   intra false
+  //#pragma HLS DEPENDENCE variable=allparts_in   intra false
   PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
   LoopD:
   for(int itau = 0; itau < NTAU; itau++) {
@@ -656,7 +673,6 @@ void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_
     etaphi_t seedphi = seeds[itau].hwPhi;
     ap_int<8> arr[4];
     #pragma HLS ARRAY_PARTITION variable=arr  complete 
-    #pragma HLS DEPENDENCE variable=arr intra false
     arraymap0(seedeta,seedphi,&(arr[0]));
     arraymap1(seedeta,seedphi,&(arr[1]));
     arraymap2(seedeta,seedphi,&(arr[2]));
@@ -668,10 +684,10 @@ void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_
       int NPHOTONOFFSET  = iregion*NTAUPARTS+4*NTAUPARTS;//NPHOTON;
       int NSELCALOOFFSET = iregion*NTAUPARTS+8*NTAUPARTS;//NSELCALO;
       int NMUOFFSET      = iregion*NMU+12*NTAUPARTS;
-      deltaR_in<NTRACK,NTAUPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch [pRegion],allparts_in);
-      deltaR_in<NPHOTON,NTAUPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem [pRegion],allparts_in);
-      deltaR_in<NSELCALO,NTAUPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne [pRegion],allparts_in);
-      deltaR_in<NMU,NMU>            (NMUOFFSET,     seedeta,seedphi,pfmu [pRegion],allparts_in);
+      deltaR_in<NTRACK,NTAUPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch[pRegion], allparts_in);
+      deltaR_in<NPHOTON,NTAUPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], allparts_in);
+      deltaR_in<NSELCALO,NTAUPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], allparts_in);
+      deltaR_in<NMU,NMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], allparts_in);
     }
   }
 }

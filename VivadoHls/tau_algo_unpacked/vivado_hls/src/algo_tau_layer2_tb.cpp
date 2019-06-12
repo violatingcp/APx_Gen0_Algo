@@ -19,7 +19,8 @@ typedef hls::stream<axi_t>    stream_t;
 
 int main(int argc, char ** argv) {
   hls::stream<PFChargedObj> link_in[DATA_SIZE];
-  hls::stream<axi_t>        link_out;
+  hls::stream<PFChargedObj> link_out;
+  //hls::stream<axi_t>        link_out;
 
   float dphi  = 0.02; 
   float deta  = 0.02; 
@@ -46,19 +47,18 @@ int main(int argc, char ** argv) {
     for(int i0 = 0; i0 < DATA_SIZE;  i0++)      link_in[i0].write(parts[idepth][i0]);
   }
   algo_tau_layer2(link_in, link_out);
-  tmpaxi_t tau[DEPTH][NPART];  
+  //tmpaxi_t tau[DEPTH][NPART];  
   for(int idepth = 0; idepth < 1; idepth++) {
-    axi_t tmp_out; 
-    link_out.read(tmp_out);
-    std::cout << " out " << tmp_out.data << std::endl;
-    for(int i0 = 0; i0 < NPART; i0++) tau[idepth][i0] = tmp_out.data.range(63*(i0+1),64*(i0));
-    for(int i0 = 0; i0 < NPART; i0++) { 
-     tmpaxi_t pTmp = tau[idepth][i0];
-     float pPt  = pTmp.range(15,0);pPt/=PT_SCALE;
-     float pEta = pTmp.range(24,16);pEta/=ETAPHI_SCALE;
-     float pPhi = pTmp.range(34,25);pPhi/=ETAPHI_SCALE;
-     std::cout << "===> depth " << idepth << " -- part " << i0 << " vector " << pPt << "-- " << pEta << " -- " << pPhi << std::endl;
-    }
+    //PFChargedObj tmp_out; 
+    //link_out.read(tmp_out);
+    //std::cout << " out " << tmp_out.data << std::endl;
+    //for(int i0 = 0; i0 < NPART; i0++) tau[idepth][i0] = tmp_out.data.range(63*(i0+1),64*(i0));
+    //for(int i0 = 0; i0 < NPART; i0++) { 
+    PFChargedObj pTmp; link_out.read(pTmp);
+    float pPt  = pTmp.hwPt;pPt/=PT_SCALE;
+    float pEta = pTmp.hwEta;pEta/=ETAPHI_SCALE;
+    float pPhi = pTmp.hwPhi;pPhi/=ETAPHI_SCALE;
+    std::cout << "===> depth " << idepth << " -- part " << " vector " << pPt << "-- " << pEta << " -- " << pPhi << std::endl;
   }
 }
 

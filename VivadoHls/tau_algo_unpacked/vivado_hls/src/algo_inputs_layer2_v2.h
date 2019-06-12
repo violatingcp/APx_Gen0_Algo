@@ -1,5 +1,5 @@
-#ifndef ALGO_INPUTS_LAYER2_H
-#define ALGO_INPUTS_LAYER2_H
+#ifndef ALGO_INPUTS_LAYER2_V2_H
+#define ALGO_INPUTS_LAYER2_V2_H
 
 #define AP_INT_MAX_W 1600
 #include <ap_int.h>
@@ -9,8 +9,8 @@
 #include "GlobalCorrelator_HLS/puppi/firmware/simple_puppi.h"
 
 #define DATA_SIZE 128
-#define NTAU  5
-#define NREGIONS 12
+#define NTAU  6
+#define NREGIONS 72
 #define NPART 25
 #define DEPTH NREGIONS*2
 #define NTAUPARTS  10
@@ -24,6 +24,6 @@ static int16_t PHI_WRAP = 360*ETAPHI_FACTOR;            // what is 3.14 in integ
 typedef ap_axis <64*NPART,1,1,1> axi_t;
 typedef hls::stream<axi_t> stream_t;
 
-void algo_inputs_layer2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ch2_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,hls::stream<PFChargedObj > allparts_in [DATA_SIZE]);
+void algo_inputs_layer2_v2(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,hls::stream<PFChargedObj > allparts_in [DATA_SIZE]);
 
 #endif

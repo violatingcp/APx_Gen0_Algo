@@ -9,7 +9,7 @@
 #include <string>
 
 #include "ap_int.h"
-#include "algo_inputs_layer2.h"
+#include "algo_inputs_layer2_v2.h"
 
 using namespace std;
 
@@ -18,8 +18,7 @@ typedef ap_axis <64*NPART,1,1,1> axi_t;
 typedef hls::stream<axi_t> stream_t;
 
 int main(int argc, char ** argv) {
-  hls::stream<axi_t>     ch1_link_in;
-  hls::stream<axi_t>     ch2_link_in;
+  hls::stream<axi_t>     ch_link_in;
   hls::stream<axi_t>     ne_link_in;
   hls::stream<axi_t>     em_link_in;
   hls::stream<axi_t>     mu_link_in;
@@ -91,13 +90,12 @@ int main(int argc, char ** argv) {
      for(int i0 = 0; i0 < NCALO;   i0++) tmpne.data.range(63*(i0+1),64*(i0)) = neparts[idepth][i0];  
      for(int i0 = 0; i0 < NMU;     i0++) tmpmu.data.range(63*(i0+1),64*(i0)) = muparts[idepth][i0];  
      //tmp.
-     ch1_link_in.write(tmpch);
-     ch2_link_in.write(tmpch);
+     ch_link_in.write(tmpch);
      ne_link_in.write(tmpne);
      em_link_in.write(tmpem);
      mu_link_in.write(tmpmu);
   }
-  algo_inputs_layer2(ch1_link_in,ch2_link_in, ne_link_in, em_link_in, mu_link_in,  link_out);
+  algo_inputs_layer2_v2(ch_link_in,ne_link_in, em_link_in, mu_link_in,  link_out);
   for(int idepth = 0; idepth < NTAU; idepth++) {
     for(int ipart = 0; ipart < DATA_SIZE; ipart++) { 
       PFChargedObj pTmp;

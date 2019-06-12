@@ -9,22 +9,12 @@
 #include <string>
 
 #include "ap_int.h"
-#include "algo_inputs_layer2.h"
+#include "algo_inputs_layer2_v3.h"
 
 using namespace std;
 
 typedef ap_int<64>            tmpaxi_t;
-typedef ap_axis <64*NPART,1,1,1> axi_t;
-typedef hls::stream<axi_t> stream_t;
-
 int main(int argc, char ** argv) {
-  hls::stream<axi_t>     ch1_link_in;
-  hls::stream<axi_t>     ch2_link_in;
-  hls::stream<axi_t>     ne_link_in;
-  hls::stream<axi_t>     em_link_in;
-  hls::stream<axi_t>     mu_link_in;
-  hls::stream<PFChargedObj>     link_out[DATA_SIZE];
-
   float dphi  = 0.02; 
   float deta  = 0.02; 
   float pt    = 1.;
@@ -81,31 +71,35 @@ int main(int argc, char ** argv) {
       muparts[idepth][i0] = pTmp;
     }
   } 
+  //void algo_inputs_layer2_v3(
+  MP7DataWord input[DEPTH][MP7_NCHANN];
+  MP7DataWord output[DEPTH][MP7_NCHANN];
   for(int idepth = 0; idepth < DEPTH; idepth++) { 
-     axi_t tmpch; 
-     axi_t tmpne; 
-     axi_t tmpem; 
-     axi_t tmpmu; 
-     for(int i0 = 0; i0 < NTRACK;  i0++) tmpch.data.range(63*(i0+1),64*(i0)) = chparts[idepth][i0];  
-     for(int i0 = 0; i0 < NEMCALO; i0++) tmpem.data.range(63*(i0+1),64*(i0)) = emparts[idepth][i0];  
-     for(int i0 = 0; i0 < NCALO;   i0++) tmpne.data.range(63*(i0+1),64*(i0)) = neparts[idepth][i0];  
-     for(int i0 = 0; i0 < NMU;     i0++) tmpmu.data.range(63*(i0+1),64*(i0)) = muparts[idepth][i0];  
-     //tmp.
-     ch1_link_in.write(tmpch);
-     ch2_link_in.write(tmpch);
-     ne_link_in.write(tmpne);
-     em_link_in.write(tmpem);
-     mu_link_in.write(tmpmu);
+    for(int i0 = 0; i0 < NTRACK;  i0++) {
+      input[idepth][i0*2+0] = chparts[idepth][i0].range(31,0);  
+      input[idepth][i0*2+1] = chparts[idepth][i0].range(63,32);  
+    }
+    for(int i0 = 0; i0 < NEMCALO; i0++) { 
+      input[idepth][i0*2+0+EMOFFS] = emparts[idepth][i0].range(31,0);  
+      input[idepth][i0*2+1+EMOFFS] = emparts[idepth][i0].range(63,32);  
+    }
+    for(int i0 = 0; i0 < NCALO;   i0++) { 
+      input[idepth][i0*2+0+HAOFFS] = neparts[idepth][i0].range(31,0);  
+      input[idepth][i0*2+1+HAOFFS] = neparts[idepth][i0].range(63,32);
+    }  
+    for(int i0 = 0; i0 < NMU;     i0++) { 
+      input[idepth][i0*2+0+MUOFFS]  = muparts[idepth][i0].range(31,0);  
+      input[idepth][i0*2+0+MUOFFS]  = muparts[idepth][i0].range(63,32);  
+    }
+    algo_inputs_layer2_v3(input[idepth],output[idepth]);
   }
-  algo_inputs_layer2(ch1_link_in,ch2_link_in, ne_link_in, em_link_in, mu_link_in,  link_out);
   for(int idepth = 0; idepth < NTAU; idepth++) {
     for(int ipart = 0; ipart < DATA_SIZE; ipart++) { 
       PFChargedObj pTmp;
-      link_out[ipart].read(pTmp);
-      float pPt  = pTmp.hwPt; pPt/=PT_SCALE;
-      float pEta = pTmp.hwEta;pEta/=ETAPHI_SCALE;
-      float pPhi = pTmp.hwPhi;pPhi/=ETAPHI_SCALE;
-      int   pId  = pTmp.hwId;
+      float pPt  = output[idepth][ipart].range(15,0);  pPt/=PT_SCALE;
+      float pEta = output[idepth][ipart].range(31,16); pEta/=ETAPHI_SCALE;
+      float pPhi = output[idepth][ipart].range(15,0);  pPhi/=ETAPHI_SCALE;
+      int   pId  = output[idepth][ipart].range(31,16); 
       std::cout << "===> tau part " << idepth << " -- part " << ipart << " vector " << pPt << "-- " << pEta << " -- " << pPhi << " - Id - " << pId << std::endl;
     }
   }
