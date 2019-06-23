@@ -1,4 +1,6 @@
-#include "algo_inputs_layer2_v3.h"
+#include "algo_layer2_v2.h"
+#include "firmware/tau_nn.h"
+#include "sorting_network.h"
 #include "hls_video.h"
 
 template<int NB>
@@ -45,27 +47,99 @@ void ptsort_hwopt_ind(T in[NIn], T out[NOut]) {
     }
 
 }
+template<unsigned int N> 
+inline void mp7_unpack(axi_t data,int iDepth, PFChargedObj emcalo[]) {
+    #pragma HLS inline
+    #pragma HLS PIPELINE
+    int lOffSet = iDepth*N;
+    for (unsigned int i = 0; i < N; ++i) {
+      int pOffset = (i)*64;
+      emcalo[lOffSet+i].hwPt       = data.data(15+pOffset, 0+pOffset);
+      emcalo[lOffSet+i].hwEta      = data.data(24+pOffset,16+pOffset);
+      emcalo[lOffSet+i].hwPhi      = data.data(34+pOffset,25+pOffset);
+      emcalo[lOffSet+i].hwId       = data.data(38+pOffset,35+pOffset);
+      emcalo[lOffSet+i].hwZ0       = data.data(48+pOffset,39+pOffset);
+    }
+}
 
-template<unsigned int N,unsigned int OFFSET> 
-inline void mp7_unpack(MP7DataWord data[MP7_NCHANN], PFChargedObj emcalo[N]) {
+template<unsigned int N> 
+inline void mp7_unpack(axi_t data, PFChargedObj emcalo[N]) {
     #pragma HLS inline
     #pragma HLS PIPELINE
     for (unsigned int i = 0; i < N; ++i) {
-      emcalo[i].hwPt       = data[OFFSET+2*i+0](15, 0);
-      emcalo[i].hwEta      = data[OFFSET+2*i+0](31,16);
-      emcalo[i].hwPhi      = data[OFFSET+2*i+1](15, 0);
-      emcalo[i].hwId       = data[OFFSET+2*i+1](31,16);
+      int pOffset = (i)*64;
+      emcalo[i].hwPt       = data.data(15+pOffset, 0+pOffset);
+      emcalo[i].hwEta      = data.data(24+pOffset,16+pOffset);
+      emcalo[i].hwPhi      = data.data(34+pOffset,25+pOffset);
+      emcalo[i].hwId       = data.data(38+pOffset,35+pOffset);
+      emcalo[i].hwZ0       = data.data(48+pOffset,39+pOffset);
     }
 }
-inline void mp7_unpack_seed(MP7DataWord data[MP7_NCHANN], PFChargedObj &seed) {
+
+inline void mp7_unpack_seed(axi_t data, PFChargedObj &seed) {
     #pragma HLS inline
     #pragma HLS PIPELINE
-    seed.hwPt          = data[0](15, 0);
-    seed.hwEta         = data[0](31,16);
-    seed.hwPhi         = data[1](15, 0);
-    seed.hwId          = data[1](31,16);
+    seed.hwPt          = data.data(15, 0);
+    seed.hwEta         = data.data(24,16);
+    seed.hwPhi         = data.data(34,25);
+    seed.hwId          = data.data(38,35);
+    seed.hwZ0          = data.data(48,39);
 }
 
+template<unsigned int N,unsigned int NR> 
+inline void mp7_unpack(axi_t data, PFChargedObj emcalo[N*NR],int iBase) {
+    #pragma HLS inline
+    #pragma HLS PIPELINE
+    for (unsigned int i = 0; i < N; ++i) {
+      int pOffset = (i)*64;
+      emcalo[iBase+i].hwPt       = data.data(15+pOffset, 0+pOffset);
+      emcalo[iBase+i].hwEta      = data.data(24+pOffset,16+pOffset);
+      emcalo[iBase+i].hwPhi      = data.data(34+pOffset,25+pOffset);
+      emcalo[iBase+i].hwId       = data.data(38+pOffset,35+pOffset);
+      emcalo[iBase+i].hwZ0       = data.data(48+pOffset,39+pOffset);
+    }
+}
+
+template<unsigned int N> 
+inline void mp7_unpack(axi_t data, PFNeutralObj emcalo[N]) { //,int iBase) {
+    #pragma HLS inline
+    #pragma HLS PIPELINE
+    for (unsigned int i = 0; i < N; ++i) {
+      int pOffset = (i)*64;
+      emcalo[i].hwPt       = data.data(15+pOffset, 0+pOffset);
+      emcalo[i].hwEta      = data.data(24+pOffset,16+pOffset);
+      emcalo[i].hwPhi      = data.data(34+pOffset,25+pOffset);
+      emcalo[i].hwId       = data.data(38+pOffset,35+pOffset);
+      emcalo[i].hwPtPuppi  = data.data(55+pOffset,39+pOffset);
+    }
+}
+template<unsigned int N, unsigned int OFFS> 
+inline void mp7_pack(PFChargedObj obj[N], axi_t &data) {
+    #pragma HLS inline
+    for (unsigned int i = 0; i < N; ++i) {
+      #pragma HLS UNROLL
+      int pOffset = i*64;
+      data.data.range(15+pOffset,0 +pOffset) = obj[i].hwPt;
+      data.data.range(24+pOffset,16+pOffset) = obj[i].hwEta;
+      data.data.range(34+pOffset,25+pOffset) = obj[i].hwPhi;
+      data.data.range(38+pOffset,35+pOffset) = obj[i].hwId;
+      data.data.range(48+pOffset,39+pOffset) = obj[i].hwZ0;
+    }
+}
+template<unsigned int N, unsigned int OFFS> 
+inline void mp7_pack(hls::stream<PFChargedObj> obj[], axi_t &data) {
+    #pragma HLS inline
+    for (unsigned int i = 0; i < N; ++i) {
+      #pragma HLS UNROLL
+      int pOffset = i*64;
+      PFChargedObj tmpobj = obj[i].read();
+      data.data.range(15+pOffset,0 +pOffset) = tmpobj.hwPt;
+      data.data.range(24+pOffset,16+pOffset) = tmpobj.hwEta;
+      data.data.range(34+pOffset,25+pOffset) = tmpobj.hwPhi;
+      data.data.range(38+pOffset,35+pOffset) = tmpobj.hwId;
+      data.data.range(48+pOffset,39+pOffset) = tmpobj.hwZ0;
+    }
+}
 template<unsigned int N> void sumparts(pt_t &ipt,PFChargedObj iCol[4*N]) {
   #pragma HLS inline
   pt_t pt1 = 0; 
@@ -99,6 +173,7 @@ void sumpt(pt_t &taupt, PFChargedObj pfch[NTRACK*4], PFChargedObj pfpho[NPHOTON*
   sumparts<NMU>     (tauptmu ,pfmu);
   taupt = tauptch + tauptpho + tauptne + tauptmu;
 }
+/*
 template<int N,int NMAX> 
 void deltaR(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],PFChargedObj pfout[NMAX*4]) { 
   #pragma HLS inline
@@ -131,7 +206,7 @@ void deltaR(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFNeutralObj pfne[N],
    }
   }
 }
-
+*/
 template<int N_TABLE>
 void init_map_table(ap_int<8>  arr[N_TABLE], int iId){
   //4 blocks across*2 8 blocks                                                                                                                                                                                                                                                 
@@ -473,7 +548,7 @@ void tausort_in(PFChargedObj pfch[N0], PFChargedObj pfpho[N1], PFChargedObj pfne
   }
 }
 template<int N,int NMAX> 
-void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],MP7DataWord axis_in[]) { 
+void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],hls::stream<PFChargedObj > axis_in[]) { 
   #pragma HLS inline
   #pragma HLS PIPELINE 
   const ap_int<16> eDR2MAX = DR2MAX;
@@ -486,8 +561,24 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[
     } else { 
       dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
     }
-    axis_in[iOffSet*2+i*2+0] = ( dummyc.hwEta, dummyc.hwPt );
-    axis_in[iOffSet*2+i*2+1] = ( dummyc.hwId,  dummyc.hwPhi );
+    axis_in[iOffSet+i].write(dummyc);
+  }
+}
+template<int N,int NMAX> 
+void deltaR(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,PFChargedObj pfch[N],PFChargedObj axis_in[]) { 
+  #pragma HLS inline
+  #pragma HLS PIPELINE 
+  const ap_int<16> eDR2MAX = DR2MAX;
+  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+  for (int i = 0; i < NMAX; i++) {
+    #pragma HLS UNROLL
+    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
+    if(drcheck < DRCONE) { 
+      dummyc = pfch[i];
+    } else { 
+      dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
+    }
+    axis_in[iOffSet+i] = dummyc;
   }
 }
 template<int N,int NMAX> 
@@ -506,38 +597,66 @@ void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChar
     axis_in[iOffSet+i].write(dummyc);
   }
 }
-template<int N,int NMAX> 
-void deltaR_in(int iOffSet, etaphi_t seedeta,etaphi_t seedphi,int iRegion,PFChargedObj pfch[],MP7DataWord axis_in[]) { 
-  #pragma HLS inline
-  #pragma HLS PIPELINE 
-  const ap_int<16> eDR2MAX = DR2MAX;
-  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
-  int lOffSet = iRegion*N;
-  for (int i = 0; i < NMAX; i++) {
-    #pragma HLS UNROLL
-    int drcheck = dr2_int_cap<12>(seedeta,seedphi,pfch[i].hwEta,pfch[i].hwPhi,eDR2MAX);
-    if(drcheck < DRCONE) { 
-      dummyc = pfch[lOffSet+i];
-    } 
-    axis_in[iOffSet*2+i*2+0] = ( dummyc.hwEta, dummyc.hwPt );
-    axis_in[iOffSet*2+i*2+1] = ( dummyc.hwId,  dummyc.hwPhi );
+
+template<unsigned int N>
+void make_inputs(input_t nn_data[N*8], PFChargedObj pf[DATA_SIZE]) {
+  //#pragma HLS inline
+  #pragma HLS PIPELINE
+  for (int i = 0; i < N; i++) {
+    #pragma HLS PIPELINE II=1
+    PFChargedObj tmpobj = pf[i];
+    nn_data[i*8+0] = input_t(tmpobj.hwPt);
+    nn_data[i*8+1] = input_t(tmpobj.hwEta);
+    nn_data[i*8+2] = input_t(tmpobj.hwPhi);
+    nn_data[i*8+3] = input_t(tmpobj.hwId == 2 ? 1 : 0);
+    nn_data[i*8+4] = input_t(tmpobj.hwId == 3 ? 1 : 0);
+    nn_data[i*8+5] = input_t(tmpobj.hwId == 4 ? 1 : 0);
+    nn_data[i*8+6] = input_t(tmpobj.hwId == 1 ? 1 : 0);
+    nn_data[i*8+7] = input_t(tmpobj.hwId == 0 ? 1 : 0);
   }
+} 
+void input2(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj> inaxis_in[DATA_SIZE]) {
+	// input data from stream
+	for (int i = 0; i < DATA_SIZE; ++i) {
+	#pragma HLS unroll
+		datas[i] = inaxis_in[i].read();
+	}
 }
 //16+10+10+3+10 for pt,eta,phi,particleid,z0
 //typedef ap_axis <64*NPART,1,1,1> axi_t;
 //typedef hls::stream<axi_t> hls::stream<axi_t>;
 //stream depth is TM6 and 240 MHz gives 24 clocks
-void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_NCHANN]) { 
+void algo_layer2_v2(hls::stream<axi_t> &ch_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,
+		    hls::stream<PFChargedObj > &allparts_out) { 
   #pragma HLS PIPELINE 
+  //#pragma HLS INTERFACE axis port=ch_link_in
+  //#pragma HLS INTERFACE axis port=ne_link_in
+  //#pragma HLS INTERFACE axis port=em_link_in
+  //#pragma HLS INTERFACE axis port=mu_link_in
+  //#pragma HLS INTERFACE axis port=allparts_out
+  //#pragma HLS INTERFACE s_axilite port=return bundle=ctrl
+  
+  #pragma HLS stream variable=ch_link_in depth=36
+  #pragma HLS stream variable=ne_link_in  depth=36
+  #pragma HLS stream variable=em_link_in  depth=36
+  #pragma HLS stream variable=mu_link_in  depth=36
+  #pragma HLS stream variable=allparts_out depth=36  
+
+  //hls::stream<PFChargedObj > allparts_in[DATA_SIZE];
+  //#pragma HLS ARRAY_PARTITION variable=allparts_in  complete
+  //#pragma HLS DEPENDENCE variable=allparts_in    intra false
+  //#pragma HLS DEPENDENCE variable=allparts_out   intra false
+  //#pragma HLS stream variable=allparts_in  depth=6
+
+
   PFChargedObj pfch[NREGIONS][NTRACK];
   PFChargedObj pfem[NREGIONS][NPHOTON];
   PFChargedObj pfne[NREGIONS][NSELCALO];
   PFChargedObj pfmu[NREGIONS][NMU];
-  #pragma HLS ARRAY_RESHAPE variable=pfch  block factor=14   dim=2
-  #pragma HLS ARRAY_RESHAPE variable=pfem  block factor=10   dim=2
-  #pragma HLS ARRAY_RESHAPE variable=pfne  block factor=10   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfch  block factor=25   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfem  block factor=20   dim=2
+  #pragma HLS ARRAY_RESHAPE variable=pfne  block factor=20   dim=2
   #pragma HLS ARRAY_RESHAPE variable=pfmu  block factor=2    dim=2
-
   //#pragma HLS RESOURCE      variable=pfch   core=RAM_2P_BRAM
   //#pragma HLS RESOURCE      variable=pfpho  core=RAM_2P_BRAM
   //#pragma HLS RESOURCE      variable=pfne   core=RAM_2P_BRAM
@@ -556,11 +675,12 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
   LoopA:
   for(int idepth =0; idepth < NREGIONS; idepth++) { 
     #pragma HLS PIPELINE II=1
-    mp7_unpack_seed(           input, chseed[idepth]);
-    mp7_unpack<NTRACK,0>(      input, pfch [idepth]);
-    mp7_unpack<NEMCALO,EMOFFS>(input, pfem [idepth]);
-    mp7_unpack<NCALO  ,HAOFFS>(input, pfne[idepth]);
-    mp7_unpack<NMU    ,MUOFFS>(input, pfmu[idepth]);
+    axi_t charge = ch_link_in.read();
+    mp7_unpack_seed    (charge, chseed[idepth]);
+    mp7_unpack<NTRACK> (charge,pfch [idepth]);
+    mp7_unpack<NEMCALO>(em_link_in.read(), pfem[idepth]);
+    mp7_unpack<NCALO>  (ne_link_in.read(), pfne[idepth]);
+    mp7_unpack<NMU>    (mu_link_in.read(), pfmu[idepth]);
   }
   //Next iterate through seeds and compute DR
   PFChargedObj seeds[NTAU];
@@ -585,8 +705,6 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
       }
     }
   }
-  //#pragma HLS DEPENDENCE variable=allparts_in   intra false
-  PFChargedObj dummyc; dummyc.hwPt = 0; dummyc.hwEta = 0; dummyc.hwPhi = 0; dummyc.hwId = 0; dummyc.hwZ0 = 0;
   LoopD:
   for(int itau = 0; itau < NTAU; itau++) {
     #pragma HLS UNROLL
@@ -598,6 +716,8 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
     arraymap1(seedeta,seedphi,&(arr[1]));
     arraymap2(seedeta,seedphi,&(arr[2]));
     arraymap3(seedeta,seedphi,&(arr[3]));
+    PFChargedObj allparts_in[DATA_SIZE];
+    #pragma HLS ARRAY_RESHAPE variable=allparts_in complete dim=1
     for(int iregion = 0; iregion < 4; iregion++) {
       #pragma HLS UNROLL
       int pRegion = arr[iregion];
@@ -605,10 +725,19 @@ void algo_inputs_layer2_v3(MP7DataWord input[MP7_NCHANN],MP7DataWord output[MP7_
       int NPHOTONOFFSET  = iregion*NTAUPARTS+4*NTAUPARTS;//NPHOTON;
       int NSELCALOOFFSET = iregion*NTAUPARTS+8*NTAUPARTS;//NSELCALO;
       int NMUOFFSET      = iregion*NMU+12*NTAUPARTS;
-      deltaR_in<NTRACK,NTAUPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch[pRegion], output);
-      deltaR_in<NPHOTON,NTAUPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], output);
-      deltaR_in<NSELCALO,NTAUPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], output);
-      deltaR_in<NMU,NMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], output);
+      deltaR<NTRACK,NTAUPARTS>   (NTRACKOFFSET,  seedeta,seedphi,pfch[pRegion], allparts_in);
+      deltaR<NPHOTON,NTAUPARTS>  (NPHOTONOFFSET, seedeta,seedphi,pfem[pRegion], allparts_in);
+      deltaR<NSELCALO,NTAUPARTS> (NSELCALOOFFSET,seedeta,seedphi,pfne[pRegion], allparts_in);
+      deltaR<NMU,NMU>            (NMUOFFSET,     seedeta,seedphi,pfmu[pRegion], allparts_in);
     }
+    //input2(datas, allparts_in);
+    sorting_network_128_in(allparts_in);
+    input_t  nn_data[NTAUPARTS*8];
+    result_t taunn[N_OUTPUTS];
+    PFChargedObj dummyc = allparts_in[0];
+    make_inputs<NTAUPARTS>(nn_data,allparts_in);
+    tau_nn(nn_data,taunn);
+    dummyc.hwPt = taunn[0]*100;
+    allparts_out.write(dummyc);
   }
 }

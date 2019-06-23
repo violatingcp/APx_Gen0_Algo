@@ -47,6 +47,7 @@ struct layer_config
 
 
 #define DIV_ROUNDUP(n,d) ((n + d - 1) / d)
+#define ADD_LAT 4
 
  template<class data_T, class res_T, typename CONFIG_T>
 void compute_layer(
@@ -110,16 +111,34 @@ void compute_layer(
         acc[iacc] = (typename CONFIG_T::accum_t) biases[iacc];
     }
 
-    // Accumulate multiplication result
-    Accum1: for(int ii = 0; ii < CONFIG_T::n_in; ii++) {
-        if (CONFIG_T::io_type == io_serial){
-            #pragma HLS PIPELINE
-        }
-        Accum2: for(int jj = 0; jj < CONFIG_T::n_out; jj++) {
-	  acc[jj] += mult[ii*CONFIG_T::n_out+jj];
-        }
+    // special loop for accumulation
+    typename CONFIG_T::accum_t acc_lat[CONFIG_T::n_out][ADD_LAT];
+    #pragma HLS ARRAY_PARTITION variable=acc_lat complete dim=0
+    AddLatencyInit: 
+    for (int ii = 0; ii < CONFIG_T::n_out; ii++){
+      for (int ij= 0; ij < ADD_LAT; ij++){
+        #pragma UNROLL
+	acc_lat[ii][ij] = 0;
+      }
+    }
+    for(int ii = 0; ii < CONFIG_T::n_in; ii++) {
+	for (int io = 0; io < CONFIG_T::n_out; io++){
+         #pragma HLS UNROLL
+         for (int ia = 0; ia < ADD_LAT; ia++){
+          #pragma HLS UNROLL
+	  int index = ii*CONFIG_T::n_out+io;
+	  acc_lat[io][ia] += mult[index];
+	}
+      }
     }
 
+ FullAccum: 
+    for (int ii = 0; ii < CONFIG_T::n_out; ii++){
+            #pragma HLS UNROLL
+      for (int ij= 0; ij < ADD_LAT; ij++){
+	acc[ii] += acc_lat[ii][ij];
+      }
+     }
     // Cast to "res_t" type
     Result: for(int ires = 0; ires < CONFIG_T::n_out; ires++){
         if (CONFIG_T::io_type == io_serial){

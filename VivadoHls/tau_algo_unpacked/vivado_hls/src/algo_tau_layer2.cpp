@@ -94,11 +94,11 @@ void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::str
   #pragma HLS INTERFACE s_axilite port=return bundle=ctrl
 
   //hls::stream<PFChargedObj > allparts_out;
-  #pragma HLS stream variable=allparts_in  depth=3
-  #pragma HLS stream variable=allparts_out depth=3  
+  #pragma HLS stream variable=allparts_in  depth=6
+  #pragma HLS stream variable=allparts_out depth=6  
   //#pragma HLS stream variable=link_out     depth=5
 
-  sorting_network_128_nn(allparts_in,allparts_out);
+  sorting_network_64_nn(allparts_in,allparts_out);
   //axi_t data_out;
   //mp7_pack(allparts_out,data_out);
   //link_out.write(data_out);

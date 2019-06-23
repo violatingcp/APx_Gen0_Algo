@@ -1,5 +1,5 @@
-#ifndef ALGO_TAU_LAYER2_H
-#define ALGO_TAU_LAYER2_H
+#ifndef ALGO_LAYER2_V3_H
+#define ALGO_LAYER2_V3_H
 
 #define AP_INT_MAX_W 1600
 #include <ap_int.h>
@@ -8,7 +8,7 @@
 #include "GlobalCorrelator_HLS/firmware/simple_fullpfalgo.h"
 #include "GlobalCorrelator_HLS/puppi/firmware/simple_puppi.h"
 
-#define DATA_SIZE 64
+#define DATA_SIZE 128
 #define NTAU  6
 #define NREGIONS 36
 #define NPART 25
@@ -24,7 +24,6 @@ static int16_t PHI_WRAP = 360*ETAPHI_FACTOR;            // what is 3.14 in integ
 typedef ap_axis <64*NPART,1,1,1> axi_t;
 typedef hls::stream<axi_t> stream_t;
 
-void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<PFChargedObj> &link_out);
-//void algo_tau_layer2(hls::stream<PFChargedObj > allparts_in [DATA_SIZE],hls::stream<axi_t> &link_out);
+void algo_layer2_v3(hls::stream<axi_t> &ch1_link_in,hls::stream<axi_t> &ne_link_in, hls::stream<axi_t> &em_link_in, hls::stream<axi_t> &mu_link_in,hls::stream<PFChargedObj> &link_out);
 
 #endif

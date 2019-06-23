@@ -2,12 +2,10 @@
 # https://github.com/hls-fpga-machine-learning/hls4ml
 
 array set opt {
-    csim   0
-    synth  0
-    cosim  0
+    csim   1
+    synth  1
+    cosim  1
     export 1
-    #tv test1
-    tv ttbar_pu140_comb
 }
 
 foreach arg $::argv {
@@ -25,15 +23,15 @@ proc report_time { op_name time_start time_end  } {
 }
 
 # open the project, don't forget to reset
-#open_project -reset proj
-open_project 
+open_project -reset proj_v3
+#open_project proj_v2
 
 #Add sources and specify top function
-source "./sources2.tcl"
+source "./sources_v3.tcl"
 
 #reset the solution
-#open_solution -reset "solution1"
-open_solution  "solution2"
+open_solution -reset "solution1"
+#open_solution  "solution1"
 
 #Specify FPGA and clock constraints
 source "./solution.tcl"
@@ -44,7 +42,7 @@ source "./directives.tcl"
 if {$opt(csim)} {
    puts "***** C SIMULATION *****"
    set time_start [clock clicks -milliseconds]
-   csim_design -argv $opt(tv)
+   csim_design 
    set time_end [clock clicks -milliseconds]
    report_time "C SIMULATION" $time_start $time_end  
 }
@@ -58,7 +56,7 @@ if {$opt(synth)} {
    if {$opt(cosim)} {
        puts "***** C/RTL SIMULATION *****"
        set time_start [clock clicks -milliseconds]
-       cosim_design -argv $opt(tv) -trace_level all
+       cosim_design  -trace_level all
        set time_end [clock clicks -milliseconds]
        report_time "C/RTL SIMULATION" $time_start $time_end
    }

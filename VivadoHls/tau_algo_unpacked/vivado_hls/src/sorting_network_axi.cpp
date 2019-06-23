@@ -1,20 +1,20 @@
-#include "sorting_network.h"
+#include "sorting_network_axi.h"
 #include "firmware/tau_nn.h"
 
-void swap1(PFChargedObj &data1, PFChargedObj &data2) {
-	if (data1.hwPt < data2.hwPt) {
+void swap1(axi2_t &data1, axi2_t &data2) {
+	if (data1 < data2) {
 		std::swap(data1, data2);
 	}
 }
 
-void swap2(PFChargedObj &data1, PFChargedObj &data2) {
-	if (data1.hwPt > data2.hwPt) {
+void swap2(axi2_t &data1, axi2_t &data2) {
+	if (data1 > data2) {
 		std::swap(data1, data2);
 	}
 
 }
 
-void block2_step1_net_64(PFChargedObj datas[64]) {
+void block2_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap1(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -49,7 +49,7 @@ void block2_step1_net_64(PFChargedObj datas[64]) {
 	swap1(datas[62], datas[63]);
 }
 
-void block4_step2_net_64(PFChargedObj datas[64]) {
+void block4_step2_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap1(datas[4], datas[6]);
@@ -84,7 +84,7 @@ void block4_step2_net_64(PFChargedObj datas[64]) {
 	swap1(datas[61], datas[63]);
 }
 
-void block4_step1_net_64(PFChargedObj datas[64]) {
+void block4_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap1(datas[4], datas[5]);
@@ -119,7 +119,7 @@ void block4_step1_net_64(PFChargedObj datas[64]) {
 	swap1(datas[62], datas[63]);
 }
 
-void block8_step4_net_64(PFChargedObj datas[64]) {
+void block8_step4_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -154,7 +154,7 @@ void block8_step4_net_64(PFChargedObj datas[64]) {
 	swap1(datas[59], datas[63]);
 }
 
-void block8_step2_net_64(PFChargedObj datas[64]) {
+void block8_step2_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -189,7 +189,7 @@ void block8_step2_net_64(PFChargedObj datas[64]) {
 	swap1(datas[61], datas[63]);
 }
 
-void block8_step1_net_64(PFChargedObj datas[64]) {
+void block8_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -224,7 +224,7 @@ void block8_step1_net_64(PFChargedObj datas[64]) {
 	swap1(datas[62], datas[63]);
 }
 
-void block16_step8_net_64(PFChargedObj datas[64]) {
+void block16_step8_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -259,7 +259,7 @@ void block16_step8_net_64(PFChargedObj datas[64]) {
 	swap1(datas[55], datas[63]);
 }
 
-void block16_step4_net_64(PFChargedObj datas[64]) {
+void block16_step4_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -294,7 +294,7 @@ void block16_step4_net_64(PFChargedObj datas[64]) {
 	swap1(datas[59], datas[63]);
 }
 
-void block16_step2_net_64(PFChargedObj datas[64]) {
+void block16_step2_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -329,7 +329,7 @@ void block16_step2_net_64(PFChargedObj datas[64]) {
 	swap1(datas[61], datas[63]);
 }
 
-void block16_step1_net_64(PFChargedObj datas[64]) {
+void block16_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -364,7 +364,7 @@ void block16_step1_net_64(PFChargedObj datas[64]) {
 	swap1(datas[62], datas[63]);
 }
 
-void block32_step16_net_64(PFChargedObj datas[64]) {
+void block32_step16_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[16]);
 	swap2(datas[1], datas[17]);
 	swap2(datas[2], datas[18]);
@@ -399,7 +399,7 @@ void block32_step16_net_64(PFChargedObj datas[64]) {
 	swap1(datas[47], datas[63]);
 }
 
-void block32_step8_net_64(PFChargedObj datas[64]) {
+void block32_step8_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -434,7 +434,7 @@ void block32_step8_net_64(PFChargedObj datas[64]) {
 	swap1(datas[55], datas[63]);
 }
 
-void block32_step4_net_64(PFChargedObj datas[64]) {
+void block32_step4_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -469,7 +469,7 @@ void block32_step4_net_64(PFChargedObj datas[64]) {
 	swap1(datas[59], datas[63]);
 }
 
-void block32_step2_net_64(PFChargedObj datas[64]) {
+void block32_step2_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -504,7 +504,7 @@ void block32_step2_net_64(PFChargedObj datas[64]) {
 	swap1(datas[61], datas[63]);
 }
 
-void block32_step1_net_64(PFChargedObj datas[64]) {
+void block32_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -539,7 +539,7 @@ void block32_step1_net_64(PFChargedObj datas[64]) {
 	swap1(datas[62], datas[63]);
 }
 
-void block64_step32_net_64(PFChargedObj datas[64]) {
+void block64_step32_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[32]);
 	swap2(datas[1], datas[33]);
 	swap2(datas[2], datas[34]);
@@ -574,7 +574,7 @@ void block64_step32_net_64(PFChargedObj datas[64]) {
 	swap2(datas[31], datas[63]);
 }
 
-void block64_step16_net_64(PFChargedObj datas[64]) {
+void block64_step16_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[16]);
 	swap2(datas[1], datas[17]);
 	swap2(datas[2], datas[18]);
@@ -609,7 +609,7 @@ void block64_step16_net_64(PFChargedObj datas[64]) {
 	swap2(datas[47], datas[63]);
 }
 
-void block64_step8_net_64(PFChargedObj datas[64]) {
+void block64_step8_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -644,7 +644,7 @@ void block64_step8_net_64(PFChargedObj datas[64]) {
 	swap2(datas[55], datas[63]);
 }
 
-void block64_step4_net_64(PFChargedObj datas[64]) {
+void block64_step4_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -679,7 +679,7 @@ void block64_step4_net_64(PFChargedObj datas[64]) {
 	swap2(datas[59], datas[63]);
 }
 
-void block64_step2_net_64(PFChargedObj datas[64]) {
+void block64_step2_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -714,7 +714,7 @@ void block64_step2_net_64(PFChargedObj datas[64]) {
 	swap2(datas[61], datas[63]);
 }
 
-void block64_step1_net_64(PFChargedObj datas[64]) {
+void block64_step1_net_64(axi2_t datas[64]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -750,7 +750,7 @@ void block64_step1_net_64(PFChargedObj datas[64]) {
 }
 
 
-void sorting_network_64_in(PFChargedObj datas[64]) {
+void sorting_network_64_in(axi2_t datas[64]) {
   //#pragma HLS pipeline II=2
   //#pragma HLS pipeline II=1
 #pragma HLS pipeline II=2
@@ -777,7 +777,7 @@ void sorting_network_64_in(PFChargedObj datas[64]) {
 	block64_step1_net_64(datas);
 }
 
-void block2_step1_net_128(PFChargedObj datas[128]) {
+void block2_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap1(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -844,7 +844,7 @@ void block2_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block4_step2_net_128(PFChargedObj datas[128]) {
+void block4_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap1(datas[4], datas[6]);
@@ -911,7 +911,7 @@ void block4_step2_net_128(PFChargedObj datas[128]) {
 	swap1(datas[125], datas[127]);
 }
 
-void block4_step1_net_128(PFChargedObj datas[128]) {
+void block4_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap1(datas[4], datas[5]);
@@ -978,7 +978,7 @@ void block4_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block8_step4_net_128(PFChargedObj datas[128]) {
+void block8_step4_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -1045,7 +1045,7 @@ void block8_step4_net_128(PFChargedObj datas[128]) {
 	swap1(datas[123], datas[127]);
 }
 
-void block8_step2_net_128(PFChargedObj datas[128]) {
+void block8_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -1112,7 +1112,7 @@ void block8_step2_net_128(PFChargedObj datas[128]) {
 	swap1(datas[125], datas[127]);
 }
 
-void block8_step1_net_128(PFChargedObj datas[128]) {
+void block8_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -1179,7 +1179,7 @@ void block8_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block16_step8_net_128(PFChargedObj datas[128]) {
+void block16_step8_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -1246,7 +1246,7 @@ void block16_step8_net_128(PFChargedObj datas[128]) {
 	swap1(datas[119], datas[127]);
 }
 
-void block16_step4_net_128(PFChargedObj datas[128]) {
+void block16_step4_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -1313,7 +1313,7 @@ void block16_step4_net_128(PFChargedObj datas[128]) {
 	swap1(datas[123], datas[127]);
 }
 
-void block16_step2_net_128(PFChargedObj datas[128]) {
+void block16_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -1380,7 +1380,7 @@ void block16_step2_net_128(PFChargedObj datas[128]) {
 	swap1(datas[125], datas[127]);
 }
 
-void block16_step1_net_128(PFChargedObj datas[128]) {
+void block16_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -1447,7 +1447,7 @@ void block16_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block32_step16_net_128(PFChargedObj datas[128]) {
+void block32_step16_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[16]);
 	swap2(datas[1], datas[17]);
 	swap2(datas[2], datas[18]);
@@ -1514,7 +1514,7 @@ void block32_step16_net_128(PFChargedObj datas[128]) {
 	swap1(datas[111], datas[127]);
 }
 
-void block32_step8_net_128(PFChargedObj datas[128]) {
+void block32_step8_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -1581,7 +1581,7 @@ void block32_step8_net_128(PFChargedObj datas[128]) {
 	swap1(datas[119], datas[127]);
 }
 
-void block32_step4_net_128(PFChargedObj datas[128]) {
+void block32_step4_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -1648,7 +1648,7 @@ void block32_step4_net_128(PFChargedObj datas[128]) {
 	swap1(datas[123], datas[127]);
 }
 
-void block32_step2_net_128(PFChargedObj datas[128]) {
+void block32_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -1715,7 +1715,7 @@ void block32_step2_net_128(PFChargedObj datas[128]) {
 	swap1(datas[125], datas[127]);
 }
 
-void block32_step1_net_128(PFChargedObj datas[128]) {
+void block32_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -1782,7 +1782,7 @@ void block32_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block64_step32_net_128(PFChargedObj datas[128]) {
+void block64_step32_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[32]);
 	swap2(datas[1], datas[33]);
 	swap2(datas[2], datas[34]);
@@ -1849,7 +1849,7 @@ void block64_step32_net_128(PFChargedObj datas[128]) {
 	swap1(datas[95], datas[127]);
 }
 
-void block64_step16_net_128(PFChargedObj datas[128]) {
+void block64_step16_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[16]);
 	swap2(datas[1], datas[17]);
 	swap2(datas[2], datas[18]);
@@ -1916,7 +1916,7 @@ void block64_step16_net_128(PFChargedObj datas[128]) {
 	swap1(datas[111], datas[127]);
 }
 
-void block64_step8_net_128(PFChargedObj datas[128]) {
+void block64_step8_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -1983,7 +1983,7 @@ void block64_step8_net_128(PFChargedObj datas[128]) {
 	swap1(datas[119], datas[127]);
 }
 
-void block64_step4_net_128(PFChargedObj datas[128]) {
+void block64_step4_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -2050,7 +2050,7 @@ void block64_step4_net_128(PFChargedObj datas[128]) {
 	swap1(datas[123], datas[127]);
 }
 
-void block64_step2_net_128(PFChargedObj datas[128]) {
+void block64_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -2117,7 +2117,7 @@ void block64_step2_net_128(PFChargedObj datas[128]) {
 	swap1(datas[125], datas[127]);
 }
 
-void block64_step1_net_128(PFChargedObj datas[128]) {
+void block64_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -2184,7 +2184,7 @@ void block64_step1_net_128(PFChargedObj datas[128]) {
 	swap1(datas[126], datas[127]);
 }
 
-void block128_step64_net_128(PFChargedObj datas[128]) {
+void block128_step64_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[64]);
 	swap2(datas[1], datas[65]);
 	swap2(datas[2], datas[66]);
@@ -2251,7 +2251,7 @@ void block128_step64_net_128(PFChargedObj datas[128]) {
 	swap2(datas[63], datas[127]);
 }
 
-void block128_step32_net_128(PFChargedObj datas[128]) {
+void block128_step32_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[32]);
 	swap2(datas[1], datas[33]);
 	swap2(datas[2], datas[34]);
@@ -2318,7 +2318,7 @@ void block128_step32_net_128(PFChargedObj datas[128]) {
 	swap2(datas[95], datas[127]);
 }
 
-void block128_step16_net_128(PFChargedObj datas[128]) {
+void block128_step16_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[16]);
 	swap2(datas[1], datas[17]);
 	swap2(datas[2], datas[18]);
@@ -2385,7 +2385,7 @@ void block128_step16_net_128(PFChargedObj datas[128]) {
 	swap2(datas[111], datas[127]);
 }
 
-void block128_step8_net_128(PFChargedObj datas[128]) {
+void block128_step8_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[8]);
 	swap2(datas[1], datas[9]);
 	swap2(datas[2], datas[10]);
@@ -2452,7 +2452,7 @@ void block128_step8_net_128(PFChargedObj datas[128]) {
 	swap2(datas[119], datas[127]);
 }
 
-void block128_step4_net_128(PFChargedObj datas[128]) {
+void block128_step4_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[4]);
 	swap2(datas[1], datas[5]);
 	swap2(datas[2], datas[6]);
@@ -2519,7 +2519,7 @@ void block128_step4_net_128(PFChargedObj datas[128]) {
 	swap2(datas[123], datas[127]);
 }
 
-void block128_step2_net_128(PFChargedObj datas[128]) {
+void block128_step2_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[2]);
 	swap2(datas[1], datas[3]);
 	swap2(datas[4], datas[6]);
@@ -2586,7 +2586,7 @@ void block128_step2_net_128(PFChargedObj datas[128]) {
 	swap2(datas[125], datas[127]);
 }
 
-void block128_step1_net_128(PFChargedObj datas[128]) {
+void block128_step1_net_128(axi2_t datas[128]) {
 	swap2(datas[0], datas[1]);
 	swap2(datas[2], datas[3]);
 	swap2(datas[4], datas[5]);
@@ -2655,7 +2655,7 @@ void block128_step1_net_128(PFChargedObj datas[128]) {
 
 
 
-void sorting_network_128_in(PFChargedObj datas[128]) {
+void sorting_network_128_in(axi2_t datas[128]) {
 #pragma HLS pipeline II=2
 
 	block2_step1_net_128(datas);
@@ -2688,7 +2688,7 @@ void sorting_network_128_in(PFChargedObj datas[128]) {
 	block128_step1_net_128(datas);
 }
 
-void input(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj> inaxis_in[DATA_SIZE]) {
+void input(axi2_t datas[DATA_SIZE], hls::stream<axi2_t> inaxis_in[DATA_SIZE]) {
 	// input data from stream
 	for (int i = 0; i < DATA_SIZE; ++i) {
 	#pragma HLS unroll
@@ -2697,7 +2697,7 @@ void input(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj> inaxis_in[DA
 }
 
 
-void output(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj > inaxis_out[DATA_SIZE]) {
+void output(axi2_t datas[DATA_SIZE], hls::stream<axi2_t > inaxis_out[DATA_SIZE]) {
 	// output data to stream
 	for (int i = 0; i < DATA_SIZE; ++i) {
 	#pragma HLS unroll
@@ -2705,13 +2705,13 @@ void output(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj > inaxis_out
 	}
 }
 
-void sorting_network_64(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFChargedObj> data_out[DATA_SIZE]) { 
+void sorting_network_64(hls::stream<axi2_t> data_in[DATA_SIZE],hls::stream<axi2_t> data_out[DATA_SIZE]) { 
  #pragma HLS interface ap_ctrl_hs port=return
  #pragma HLS interface axis port=data_in register
  #pragma HLS interface axis port=data_out register
  #pragma HLS PIPELINE II=12
   
-  PFChargedObj datas[DATA_SIZE];
+  axi2_t datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
  
   for(int i0 = 0; i0 < NTAU; i0++) {
@@ -2722,13 +2722,13 @@ void sorting_network_64(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream
 }
 
 
-void sorting_network_128(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFChargedObj> data_out[DATA_SIZE]) { 
+void sorting_network_128(hls::stream<axi2_t> data_in[DATA_SIZE],hls::stream<axi2_t> data_out[DATA_SIZE]) { 
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in register
   #pragma HLS interface axis port=data_out register
   #pragma HLS PIPELINE II=12
   
-  PFChargedObj datas[DATA_SIZE];
+  axi2_t datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
  
   for(int i0 = 0; i0 < NTAU; i0++) {
@@ -2739,24 +2739,25 @@ void sorting_network_128(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::strea
 }
 
 template<unsigned int N>
-void make_inputs(input_t nn_data[N*8], PFChargedObj pf[DATA_SIZE]) {
+void make_inputs(input_t nn_data[N*8], axi2_t pf[DATA_SIZE]) {
   //#pragma HLS inline
   #pragma HLS PIPELINE
   for (int i = 0; i < N; i++) {
     #pragma HLS PIPELINE II=1
-    PFChargedObj tmpobj = pf[i];
-    nn_data[i*8+0] = input_t(tmpobj.hwPt);
-    nn_data[i*8+1] = input_t(tmpobj.hwEta);
-    nn_data[i*8+2] = input_t(tmpobj.hwPhi);
-    nn_data[i*8+3] = input_t(tmpobj.hwId == 2 ? 1 : 0);
-    nn_data[i*8+4] = input_t(tmpobj.hwId == 3 ? 1 : 0);
-    nn_data[i*8+5] = input_t(tmpobj.hwId == 4 ? 1 : 0);
-    nn_data[i*8+6] = input_t(tmpobj.hwId == 1 ? 1 : 0);
-    nn_data[i*8+7] = input_t(tmpobj.hwId == 0 ? 1 : 0);
+    axi2_t tmpobj = pf[i];
+    nn_data[i*8+0] = input_t(tmpobj(15, 0));
+    nn_data[i*8+1] = input_t(tmpobj(31,16));
+    nn_data[i*8+2] = input_t(tmpobj(47,32));
+    ap_uint<16>  id = tmpobj(63, 48);
+    nn_data[i*8+3] = input_t(id == 2 ? 1 : 0);
+    nn_data[i*8+4] = input_t(id == 3 ? 1 : 0);
+    nn_data[i*8+5] = input_t(id == 4 ? 1 : 0);
+    nn_data[i*8+6] = input_t(id == 1 ? 1 : 0);
+    nn_data[i*8+7] = input_t(id == 0 ? 1 : 0);
   }
 } 
 
-void output_nn(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj > inaxis_out[DATA_SIZE]) {
+void output_nn(axi2_t datas[DATA_SIZE], hls::stream<axi2_t > inaxis_out[DATA_SIZE]) {
 	// output data to stream
 	for (int i = 0; i < DATA_SIZE; ++i) {
 	#pragma HLS unroll
@@ -2764,44 +2765,44 @@ void output_nn(PFChargedObj datas[DATA_SIZE], hls::stream<PFChargedObj > inaxis_
 	}
 }
 
-void sorting_network_64_nn(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFChargedObj> &data_out) { 
-  #pragma HLS interface ap_ctrl_hs port=return
-  #pragma HLS interface axis port=data_in  register
-  #pragma HLS interface axis port=data_out register
+void sorting_network_64_nn(axi2_t data_in[DATA_SIZE],axi2_t data_out[NTAU]) { 
+  //#pragma HLS interface ap_ctrl_hs port=return
+  //#pragma HLS interface axis port=data_in  register
+  //#pragma HLS interface axis port=data_out register
   #pragma HLS PIPELINE II=12
   
-  PFChargedObj datas[DATA_SIZE];
-  #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
+  //axi2_t datas[DATA_SIZE];
+  #pragma HLS ARRAY_RESHAPE variable=data_in complete dim=1
   for(int i0 = 0; i0 < NTAU; i0++) {
-    input(datas, data_in);
-    sorting_network_64_in(datas);
+    //input(datas, data_in);
+    sorting_network_64_in(data_in);
     input_t  nn_data[NTAUPARTS*8];
     result_t taunn[N_OUTPUTS];
-    PFChargedObj dummyc = datas[0];
-    make_inputs<NTAUPARTS>(nn_data,datas);
+    axi2_t dummyc = data_in[0];
+    make_inputs<NTAUPARTS>(nn_data,data_in);
     tau_nn(nn_data,taunn);
-    dummyc.hwPt = taunn[0]*100;
-    data_out.write(dummyc);
+    dummyc(15,0) = taunn[0]*100;
+    data_out[i0] = dummyc;
   }
 }
 
-void sorting_network_128_nn(hls::stream<PFChargedObj> data_in[DATA_SIZE],hls::stream<PFChargedObj> &data_out) { 
+void sorting_network_128_nn(hls::stream<axi2_t> data_in[DATA_SIZE],hls::stream<axi2_t> &data_out) { 
   #pragma HLS interface ap_ctrl_hs port=return
   #pragma HLS interface axis port=data_in  register
   #pragma HLS interface axis port=data_out register
   #pragma HLS PIPELINE II=12
   
-  PFChargedObj datas[DATA_SIZE];
+  axi2_t datas[DATA_SIZE];
   #pragma HLS ARRAY_RESHAPE variable=datas complete dim=1
   for(int i0 = 0; i0 < NTAU; i0++) {
     input(datas, data_in);
     sorting_network_128_in(datas);
     input_t  nn_data[NTAUPARTS*8];
     result_t taunn[N_OUTPUTS];
-    PFChargedObj dummyc = datas[0];
+    axi2_t dummyc = datas[0];
     make_inputs<NTAUPARTS>(nn_data,datas);
     tau_nn(nn_data,taunn);
-    dummyc.hwPt = taunn[0]*100;
+    dummyc(15,0) = taunn[0]*100;
     data_out.write(dummyc);
   }
 }
